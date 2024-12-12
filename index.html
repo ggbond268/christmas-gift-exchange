@@ -87,12 +87,44 @@
             opacity: 0.5;
         }
 
+        .copy-button {
+            cursor: pointer;
+            color: #4285f4;
+        }
+
         .key-display {
             word-break: break-all;
             padding: 10px;
             background-color: #f8f9fa;
             margin: 10px 0;
         }
+
+        .key-display-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 4px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1000;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .toast.show {
+            visibility: visible;
+            opacity: 1;
+        }            
     </style>
 </head>
 <body>
@@ -109,18 +141,21 @@
         <p>2. 妥善保存私钥，后续获取邮寄地址需要，页面刷新会丢失！</p>
         <p>3. 确认保存好私钥后，点击提交公钥，会把公钥存储在数据库，后续为你匹配寄友。</p>
         
-        <div class="key-display">
+        <button id="generateKeys" onclick="generateKeys()">生成密钥对</button>
+        <button id="submitPublicKey" onclick="submitPublicKey()">提交公钥</button>
+
+        <div class="key-display" hidden>
             <h3>公钥</h3>
             <div id="publicKey"></div>
         </div>
         
         <div class="key-display">
-            <h3>私钥</h3>
+            <div class="key-display-header">
+                <h3>私钥</h3> 
+                <a onclick="copyPrivateKey()" type="button" class="copy-button">复制</a>
+            </div>
             <div id="privateKey"></div>
         </div>
-
-        <button id="generateKeys" onclick="generateKeys()">生成密钥对</button>
-        <button id="submitPublicKey" onclick="submitPublicKey()">提交公钥</button>
     </div>
 
     <div class="tab-content">
@@ -162,6 +197,7 @@
 
         <button onclick="getShippingAddress()">获取邮寄地址</button>
     </div>
+    <div id="toast" class="toast"></div>
 
     <script>
         function showTab(index) {
@@ -319,6 +355,22 @@
                     console.error('解密地址错误:', error, address);
                 }
             }
+        }
+
+        function showToast(message, duration = 1000) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, duration);
+        }
+
+        function copyPrivateKey() {
+            const privateKey = document.getElementById('privateKey').textContent;
+            navigator.clipboard.writeText(privateKey);
+            showToast('复制成功');
         }
     </script>
 </body>
