@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Christmas gift exchange system</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+        }   
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background: #ffffff;
+            color: #000000;
+        }
+
+        .tab.active {
+            background-color: #dfe6ed;
+            border-radius: 4px 4px 0 0;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .tabs button {
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        button {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 20px;
+            border-top-left-radius: 4px;
+            border-top-right-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #dfe6ed;
+        }
+
+        button:disabled {
+            background-color: #dfe6ed;
+            color: #000000;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .key-display {
+            word-break: break-all;
+            padding: 10px;
+            background-color: #f8f9fa;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Interactive Christmas gift exchange system</h1>
+    
+    <div class="tabs">
+        <button class="tab active" onclick="showTab(0)">Step 1</button>
+        <button class="tab" onclick="showTab(1)">Step 2</button>
+        <button class="tab" onclick="showTab(2)">Step 3</button>
+    </div>
+
+    <div class="tab-content active">
+        <p>1. 点击生成密钥对，获取专属公私钥</p>
+        <p>2. 妥善保存私钥，后续获取邮寄地址需要，页面刷新会丢失！</p>
+        <p>3. 确认保存好私钥后，点击提交公钥，会把公钥存储在数据库，后续为你匹配寄友。</p>
+        
+        <div class="key-display">
+            <h3>公钥</h3>
+            <div id="publicKey"></div>
+        </div>
+        
+        <div class="key-display">
+            <h3>私钥</h3>
+            <div id="privateKey"></div>
+        </div>
+
+        <button id="generateKeys" onclick="generateKeys()">生成密钥对</button>
+        <button id="submitPublicKey" onclick="submitPublicKey()">提交公钥</button>
+    </div>
+
+    <div class="tab-content">
+        <p>1. 所有人完成第一步提交后，用所有公钥+微信昵称随机匹配（张帅来）。</p>
+        <p>2. 每个人将获得一个公钥，将自己的邮寄地址用该公钥加密。</p>
+        <p>3. 确认地址无误，提交地址。</p>
+
+        <div class="input-group">
+            <label>🔑 抽到的公钥</label>
+            <textarea id="receivedPublicKey" placeholder="" rows="3" style="width: 100%"></textarea>
+        </div>
+
+        <div class="input-group">
+            <label>📍 我的地址</label>
+            <textarea id="myAddress" rows="3" style="width: 100%" placeholder="无格式要求，一定要能看懂，顺丰ID要注明"></textarea>
+        </div>
+
+        <div class="input-group">
+            <label>🔒 加密结果</label>
+            <textarea id="encryptedResult" rows="3" style="width: 100%" readonly></textarea>
+        </div>
+
+        <button onclick="encryptAddress()">地址加密</button>
+        <button onclick="submitEncryptedAddress()">提交加密地址</button>
+    </div>
+
+    <div class="tab-content">
+        <p>• 所有人完成第2步之后，就可以用私钥获取礼物邮寄的地址了</p>
+
+        <div class="input-group">
+            <label>🔑 自己的私钥</label>
+            <textarea id="myPrivateKey" rows="3" style="width: 100%"></textarea>
+        </div>
+
+        <div class="input-group">
+            <label>📍 邮寄地址</label>
+            <textarea id="decryptedAddress" rows="3" style="width: 100%" readonly></textarea>
+        </div>
+
+        <button onclick="getShippingAddress()">获取邮寄地址</button>
+    </div>
+
+    <script>
+        function showTab(index) {
+            // Hide all tabs and remove active class
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab and add active class
+            document.querySelectorAll('.tab-content')[index].classList.add('active');
+            document.querySelectorAll('.tab')[index].classList.add('active');
+        }
+
+        async function generateKeys() {
+            try {
+                const keyPair = await window.crypto.subtle.generateKey(
+                    {
+                    name: "RSA-OAEP",
+                    modulusLength: 2048,
+                    publicExponent: new Uint8Array([1, 0, 1]),
+                    hash: "SHA-256",
+                    },
+                    true,  // 是否可导出
+                    ["encrypt", "decrypt"]
+                );
+
+                // 导出公钥
+                const publicKey = await window.crypto.subtle.exportKey(
+                    "spki",
+                    keyPair.publicKey
+                );
+
+                // 导出私钥
+                const privateKey = await window.crypto.subtle.exportKey(
+                    "pkcs8",
+                    keyPair.privateKey
+                );
+
+                // 转换为 base64 格式
+                const publicKeyBase64 = btoa(String.fromCharCode(...new Uint8Array(publicKey)));
+                const privateKeyBase64 = btoa(String.fromCharCode(...new Uint8Array(privateKey)));
+                document.getElementById('publicKey').textContent = publicKeyBase64;
+                document.getElementById('privateKey').textContent = privateKeyBase64;
+            } catch (error) {
+                console.error('密钥生成错误:', error);
+                throw error;
+            }
+        }
+    
+        function submitPublicKey() {
+            // 这里添加提交公钥的逻辑
+            alert("公钥已提交！");
+            // 提交完公钥禁止生成，把生成和提交按钮禁止
+            document.getElementById('generateKeys').disabled = true;
+            document.getElementById('submitPublicKey').disabled = true;
+        }
+
+        async function encryptAddress() {
+            try {
+                const publicKey = document.getElementById('receivedPublicKey').value;
+                const address = document.getElementById('myAddress').value;
+
+                const encoder = new TextEncoder();
+                const addressData = encoder.encode(address);
+                // Base64 解码
+                const binaryDer = window.atob(publicKey);
+                const pubKeyBuffer = new Uint8Array(binaryDer.length);
+                for (let i = 0; i < binaryDer.length; i++) {
+                    pubKeyBuffer[i] = binaryDer.charCodeAt(i);
+                }
+
+                // 导入密钥
+                const publicKeyImprted = await window.crypto.subtle.importKey(
+                    'spki',
+                    pubKeyBuffer,
+                    {
+                        name: 'RSA-OAEP',
+                        hash: 'SHA-256',
+                    },
+                    true,
+                    ['encrypt']
+                );
+
+                const encrypted = await window.crypto.subtle.encrypt(
+                    {
+                        name: 'RSA-OAEP'
+                    },
+                    publicKeyImprted,
+                    addressData
+                );
+                const encryptedBase64 = btoa(String.fromCharCode(...new Uint8Array(encrypted)));
+                document.getElementById('encryptedResult').value = encryptedBase64;
+            } catch (error) {
+                console.error('地址加密错误:', error);
+                throw error;
+            }
+        }
+
+        function submitEncryptedAddress() {
+            // 这里添加提交加密地址的逻辑
+            alert("加密地址已提交！");
+        }
+
+        async function decryptAddress(encodeBase64Text, privateKey) {
+            const encryptData = window.atob(encodeBase64Text);
+            const bytes = new Uint8Array(encryptData.length);
+            for (let i = 0; i < encryptData.length; i++) {
+                bytes[i] = encryptData.charCodeAt(i);
+            }
+            const encodeData = bytes.buffer;
+
+            const decrypted = await window.crypto.subtle.decrypt(
+                {
+                    name: 'RSA-OAEP'
+                },
+                privateKey,
+                encodeData
+            );
+            return decrypted;
+        }
+
+        async function getShippingAddress() {
+            privateKey = document.getElementById('myPrivateKey').value;
+            const binaryDer = window.atob(privateKey);
+            const buffer = new Uint8Array(binaryDer.length);
+            for (let i = 0; i < binaryDer.length; i++) {
+                buffer[i] = binaryDer.charCodeAt(i);
+            }
+
+            const priKeyImported = await window.crypto.subtle.importKey(
+                'pkcs8',
+                buffer,
+                {
+                    name: 'RSA-OAEP',
+                    hash: { name: 'SHA-256' },
+                },
+                true,
+                ['decrypt']
+            );  
+            addressList = ["mzEG17bak8Ew+Aujf7sUsK9jJIe2hZ7tcId51Rk6wwr+pGpvYusTr7alGQinl7L0WNcOoD5PzFavv3k2Pl7AyG+rE9GfMQPwL75KMQ4nD4nLwV7rVwg9eAHoJbcJHzLAPlA6qLqeMA1J5hV95gCd3hj/Ixu8cetOc6wMsecxjZpaVDBP4rpD9uTBU+Rj9VpgECJLgZejq08DYBjCyqFkkRDagJMQsmXLRbzvqUHQ3sYurDT0QSYyS800bZ74cazodT+JC5GVZuhhd0FQEcnZHd55QeOu2l4nbzMZtd8itSjvQy81eUQgBGd4FeSD9s7MKhR+VRWjakKomc6NYWXgHA==",
+                "SwaZcPcp4QPVq3pr3f7RM9rs+n/wFDcG56Szt60ICDOJy/9qAJbUznR+bhztLEzRaz01LfLZuzTGXf3HlFiyiIblC+NpvAmb/dgLob49FQow2dXjicvp/nFgKCftYea9iaE3psW587C9sCzxnHXK8tVRyHi58In6yNgFQqI+Re4ymkayBF4+b9s+wTbFpaGzTJ7M/dWkYBw6Ayod1WhqiGvMJiDhK+p8OTnoDa1AC8sH0PD9ANjr+hfq32FwOLwVzKA4GbhRpImWTShpLStmyg5d2rmtYVR1qu4t9V4x8jyL9lql8AszAIm68D3u6FUGKHI0K/69yhgXG+UkEI6/wg=="]
+            for (let i = 0; i < addressList.length; i++) {
+                const address = addressList[i];
+                try {
+                    const decrypted = await decryptAddress(address, priKeyImported);
+                    const decoder = new TextDecoder();
+                    const decodeValue = decoder.decode(decrypted);
+                    document.getElementById('decryptedAddress').value = decodeValue;
+                    console.log(decodeValue);
+                    break;
+                } catch (error) {
+                    console.error('解密地址错误:', error, address);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
