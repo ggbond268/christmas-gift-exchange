@@ -124,7 +124,16 @@
         .toast.show {
             visibility: visible;
             opacity: 1;
-        }            
+        } 
+        
+        .form-select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+        }
     </style>
 </head>
 <body>
@@ -137,69 +146,56 @@
     </div>
 
     <div class="tab-content active">
-        <p>1. 点击生成密钥对，获取专属公私钥</p>
-        <p>2. 妥善保存私钥，后续获取邮寄地址需要，页面刷新会丢失！</p>
-        <p>3. 确认保存好私钥后，点击提交公钥，会把公钥存储在数据库，后续为你匹配寄友。</p>
-        
-        <button id="generateKeys" onclick="generateKeys()">生成密钥对</button>
-        <button id="submitPublicKey" onclick="submitPublicKey()">提交公钥</button>
-
-        <div class="key-display" hidden>
-            <h3>公钥</h3>
-            <div id="publicKey"></div>
-        </div>
-        
-        <div class="key-display">
-            <div class="key-display-header">
-                <h3>私钥</h3> 
-                <a onclick="copyPrivateKey()" type="button" class="copy-button">复制</a>
-            </div>
-            <div id="privateKey"></div>
-        </div>
+        <p>点击报名，等待所有人报名完成，执行第二步</p>
+        <button id="generateKeys" onclick="generateKeys()">报名</button>
     </div>
 
     <div class="tab-content">
-        <p>1. 所有人完成第一步提交后，用所有公钥+微信昵称随机匹配（张帅来）。</p>
-        <p>2. 每个人将获得一个公钥，将自己的邮寄地址用该公钥加密。</p>
-        <p>3. 确认地址无误，提交地址。</p>
-
+        <p>提交地址, 加密存储。</p>
         <div class="input-group">
-            <label>🔑 抽到的公钥</label>
-            <textarea id="receivedPublicKey" placeholder="" rows="3" style="width: 100%"></textarea>
+            <label>👤 我是</label>
+            <select class="form-select" id="userSelect"></select>
         </div>
-
         <div class="input-group">
             <label>📍 我的地址</label>
             <textarea id="myAddress" rows="3" style="width: 100%" placeholder="无格式要求，一定要能看懂，顺丰ID要注明"></textarea>
         </div>
-
-        <div class="input-group">
-            <label>🔒 加密结果</label>
-            <textarea id="encryptedResult" rows="3" style="width: 100%" readonly></textarea>
-        </div>
-
-        <button onclick="encryptAddress()">地址加密</button>
-        <button onclick="submitEncryptedAddress()">提交加密地址</button>
+        <button onclick="encryptAddress()">提交地址</button>
     </div>
 
     <div class="tab-content">
-        <p>• 所有人完成第2步之后，就可以用私钥获取礼物邮寄的地址了</p>
-
-        <div class="input-group">
-            <label>🔑 自己的私钥</label>
-            <textarea id="myPrivateKey" rows="3" style="width: 100%"></textarea>
-        </div>
-
+        <button onclick="getShippingAddress()">获取邮寄地址</button>
         <div class="input-group">
             <label>📍 邮寄地址</label>
+            <label id="mailUserName"></label>
             <textarea id="decryptedAddress" rows="3" style="width: 100%" readonly></textarea>
         </div>
-
-        <button onclick="getShippingAddress()">获取邮寄地址</button>
     </div>
     <div id="toast" class="toast"></div>
 
     <script>
+        // 页面加载时调用
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUsers();
+        });
+
+        async function loadUsers() {
+            try {
+                const users = getUsers();
+                const select = document.getElementById('userSelect');
+                select.innerHTML = '<option value="">请选择用户</option>';
+                users.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user;
+                    option.textContent = user;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('加载用户列表失败:', error);
+                showToast('加载用户列表失败', 'error');
+            }
+        }
+
         function showTab(index) {
             // Hide all tabs and remove active class
             document.querySelectorAll('.tab-content').forEach(content => {
@@ -215,6 +211,12 @@
         }
 
         async function generateKeys() {
+            if (localStorage.getItem('cgs-publicKey') && localStorage.getItem('cgs-privateKey')) {
+                showToast("你已经报名过了");
+                document.getElementById('generateKeys').disabled = true;
+                return;
+            }
+
             try {
                 const keyPair = await window.crypto.subtle.generateKey(
                     {
@@ -242,25 +244,72 @@
                 // 转换为 base64 格式
                 const publicKeyBase64 = btoa(String.fromCharCode(...new Uint8Array(publicKey)));
                 const privateKeyBase64 = btoa(String.fromCharCode(...new Uint8Array(privateKey)));
-                document.getElementById('publicKey').textContent = publicKeyBase64;
-                document.getElementById('privateKey').textContent = privateKeyBase64;
+                localStorage.setItem('cgs-publicKey', publicKeyBase64);
+                localStorage.setItem('cgs-privateKey', privateKeyBase64);
+                submitPublicKey(publicKeyBase64);
             } catch (error) {
                 console.error('密钥生成错误:', error);
                 throw error;
             }
         }
-    
-        function submitPublicKey() {
+
+        function getUsers() {
+            return [
+                "花生帅®",
+                "Roy。",
+                "ggbond",
+                "花生冰",
+                "Hugh",
+                "花生喵呜(出 Pixel 7、S22)",
+                "科班辉",
+                "Berry",
+                "花生路",
+                "xxm",
+                "花生刀",
+                "taevas。",
+                "蛋蛋",
+                "花生豆",
+                "按摩哥",
+                "新新新花生龙",
+                "一代目",
+            ]
+        }
+
+        function submitPublicKey(publicKey) {
             // 这里添加提交公钥的逻辑
-            alert("公钥已提交！");
+            showToast("报名成功！");
             // 提交完公钥禁止生成，把生成和提交按钮禁止
             document.getElementById('generateKeys').disabled = true;
-            document.getElementById('submitPublicKey').disabled = true;
         }
+
+        async function fetchPublicKeys() {
+            // 这里添加获取公钥的逻辑
+            return ["publicKey1", "publicKey2", "publicKey3"]
+        }
+
+        function matchGay(pubKeys, users, pubKey = null, userName = null) {
+            if (pubKeys.length !== users.length) {
+                alert('等待其他用户完成报名');
+                throw new Error('用户未报名完成');
+            }
+            const sortedPubKeys = pubKeys.sort();
+            const sortedUsers = users.sort();
+            if (pubKey) {
+                const index = sortedPubKeys.indexOf(pubKey);
+                return sortedUsers[index];
+            } else {
+                const index = sortedUsers.indexOf(userName);
+                return sortedPubKeys[index];
+            }
+        }
+
+
 
         async function encryptAddress() {
             try {
-                const publicKey = document.getElementById('receivedPublicKey').value;
+                const publicKeys = await fetchPublicKeys();
+                const users = getUsers();
+                const publicKey = matchGay(publicKeys, users, null, document.getElementById('userSelect').value);
                 const address = document.getElementById('myAddress').value;
 
                 const encoder = new TextEncoder();
@@ -292,7 +341,7 @@
                     addressData
                 );
                 const encryptedBase64 = btoa(String.fromCharCode(...new Uint8Array(encrypted)));
-                document.getElementById('encryptedResult').value = encryptedBase64;
+                submitEncryptedAddress(encryptedBase64);
             } catch (error) {
                 console.error('地址加密错误:', error);
                 throw error;
@@ -322,8 +371,18 @@
             return decrypted;
         }
 
+        async function getAddressList() {
+            return ["mzEG17bak8Ew+Aujf7sUsK9jJIe2hZ7tcId51Rk6wwr+pGpvYusTr7alGQinl7L0WNcOoD5PzFavv3k2Pl7AyG+rE9GfMQPwL75KMQ4nD4nLwV7rVwg9eAHoJbcJHzLAPlA6qLqeMA1J5hV95gCd3hj/Ixu8cetOc6wMsecxjZpaVDBP4rpD9uTBU+Rj9VpgECJLgZejq08DYBjCyqFkkRDagJMQsmXLRbzvqUHQ3sYurDT0QSYyS800bZ74cazodT+JC5GVZuhhd0FQEcnZHd55QeOu2l4nbzMZtd8itSjvQy81eUQgBGd4FeSD9s7MKhR+VRWjakKomc6NYWXgHA==",
+                "SwaZcPcp4QPVq3pr3f7RM9rs+n/wFDcG56Szt60ICDOJy/9qAJbUznR+bhztLEzRaz01LfLZuzTGXf3HlFiyiIblC+NpvAmb/dgLob49FQow2dXjicvp/nFgKCftYea9iaE3psW587C9sCzxnHXK8tVRyHi58In6yNgFQqI+Re4ymkayBF4+b9s+wTbFpaGzTJ7M/dWkYBw6Ayod1WhqiGvMJiDhK+p8OTnoDa1AC8sH0PD9ANjr+hfq32FwOLwVzKA4GbhRpImWTShpLStmyg5d2rmtYVR1qu4t9V4x8jyL9lql8AszAIm68D3u6FUGKHI0K/69yhgXG+UkEI6/wg=="]
+        }
+
         async function getShippingAddress() {
-            privateKey = document.getElementById('myPrivateKey').value;
+            const privateKey = localStorage.getItem('cgs-privateKey');
+            const publicKey = localStorage.getItem('cgs-publicKey');
+            const publicKeys = await fetchPublicKeys();
+            const users = getUsers();
+            const userName = matchGay(publicKeys, users, publicKey, null);
+            document.getElementById('mailUserName').textContent = "寄给：" + userName;
             const binaryDer = window.atob(privateKey);
             const buffer = new Uint8Array(binaryDer.length);
             for (let i = 0; i < binaryDer.length; i++) {
@@ -340,8 +399,7 @@
                 true,
                 ['decrypt']
             );  
-            addressList = ["mzEG17bak8Ew+Aujf7sUsK9jJIe2hZ7tcId51Rk6wwr+pGpvYusTr7alGQinl7L0WNcOoD5PzFavv3k2Pl7AyG+rE9GfMQPwL75KMQ4nD4nLwV7rVwg9eAHoJbcJHzLAPlA6qLqeMA1J5hV95gCd3hj/Ixu8cetOc6wMsecxjZpaVDBP4rpD9uTBU+Rj9VpgECJLgZejq08DYBjCyqFkkRDagJMQsmXLRbzvqUHQ3sYurDT0QSYyS800bZ74cazodT+JC5GVZuhhd0FQEcnZHd55QeOu2l4nbzMZtd8itSjvQy81eUQgBGd4FeSD9s7MKhR+VRWjakKomc6NYWXgHA==",
-                "SwaZcPcp4QPVq3pr3f7RM9rs+n/wFDcG56Szt60ICDOJy/9qAJbUznR+bhztLEzRaz01LfLZuzTGXf3HlFiyiIblC+NpvAmb/dgLob49FQow2dXjicvp/nFgKCftYea9iaE3psW587C9sCzxnHXK8tVRyHi58In6yNgFQqI+Re4ymkayBF4+b9s+wTbFpaGzTJ7M/dWkYBw6Ayod1WhqiGvMJiDhK+p8OTnoDa1AC8sH0PD9ANjr+hfq32FwOLwVzKA4GbhRpImWTShpLStmyg5d2rmtYVR1qu4t9V4x8jyL9lql8AszAIm68D3u6FUGKHI0K/69yhgXG+UkEI6/wg=="]
+            const addressList = await getAddressList();
             for (let i = 0; i < addressList.length; i++) {
                 const address = addressList[i];
                 try {
@@ -349,7 +407,6 @@
                     const decoder = new TextDecoder();
                     const decodeValue = decoder.decode(decrypted);
                     document.getElementById('decryptedAddress').value = decodeValue;
-                    console.log(decodeValue);
                     break;
                 } catch (error) {
                     console.error('解密地址错误:', error, address);
