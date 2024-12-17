@@ -1,434 +1,523 @@
 <!DOCTYPE html>
 <html lang="zh">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Interactive Christmas gift exchange system</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
 
-        h1 {
-            text-align: center;
-        }   
+      h1 {
+        text-align: center;
+      }
 
-        .tabs {
-            display: flex;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #ddd;
-        }
+      .tabs {
+        display: flex;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #ddd;
+      }
 
-        .tab {
-            padding: 10px 20px;
-            cursor: pointer;
-            border: none;
-            background: #ffffff;
-            color: #000000;
-        }
+      .tab {
+        padding: 10px 20px;
+        cursor: pointer;
+        border: none;
+        background: #ffffff;
+        color: #000000;
+      }
 
-        .tab.active {
-            background-color: #dfe6ed;
-            border-radius: 4px 4px 0 0;
-        }
+      .tab.active {
+        background-color: #dfe6ed;
+        border-radius: 4px 4px 0 0;
+      }
 
-        .tab-content {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
+      .tab-content {
+        display: none;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
 
-        .tab-content.active {
-            display: block;
-        }
+      .tab-content.active {
+        display: block;
+      }
 
-        .input-group {
-            margin-bottom: 20px;
-        }
+      .input-group {
+        margin-bottom: 20px;
+      }
 
-        input[type="text"] {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
+      input[type="text"] {
+        width: 100%;
+        padding: 8px;
+        margin-top: 5px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
 
-        .tabs button {
-            border-bottom-left-radius: 0;
-            border-bottom-right-radius: 0;
-        }
+      .tabs button {
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+      }
 
-        button {
-            background-color: #4285f4;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 10px 20px;
-            border-top-left-radius: 4px;
-            border-top-right-radius: 4px;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 10px;
-        }
+      button {
+        background-color: #4285f4;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 10px 20px;
+        border-top-left-radius: 4px;
+        border-top-right-radius: 4px;
+        cursor: pointer;
+        width: 100%;
+        margin-top: 10px;
+      }
 
-        button:hover {
-            background-color: #dfe6ed;
-        }
+      button:hover {
+        background-color: #dfe6ed;
+      }
 
-        button:disabled {
-            background-color: #dfe6ed;
-            color: #000000;
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
+      button:disabled {
+        background-color: #dfe6ed;
+        color: #000000;
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
 
-        .copy-button {
-            cursor: pointer;
-            color: #4285f4;
-        }
+      .copy-button {
+        cursor: pointer;
+        color: #4285f4;
+      }
 
-        .key-display {
-            word-break: break-all;
-            padding: 10px;
-            background-color: #f8f9fa;
-            margin: 10px 0;
-        }
+      .key-display {
+        word-break: break-all;
+        padding: 10px;
+        background-color: #f8f9fa;
+        margin: 10px 0;
+      }
 
-        .key-display-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+      .key-display-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
 
-        .toast {
-            visibility: hidden;
-            min-width: 250px;
-            background-color: #333;
-            color: #fff;
-            text-align: center;
-            border-radius: 4px;
-            padding: 16px;
-            position: fixed;
-            z-index: 1000;
-            left: 50%;
-            bottom: 30px;
-            transform: translateX(-50%);
-            opacity: 0;
-            transition: opacity 0.3s, visibility 0.3s;
-        }
-        .toast.show {
-            visibility: visible;
-            opacity: 1;
-        } 
-        
-        .form-select {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background-color: white;
-        }
+      .toast {
+        visibility: hidden;
+        min-width: 250px;
+        background-color: #333;
+        color: #fff;
+        text-align: center;
+        border-radius: 4px;
+        padding: 16px;
+        position: fixed;
+        z-index: 1000;
+        left: 50%;
+        bottom: 30px;
+        transform: translateX(-50%);
+        opacity: 0;
+        transition: opacity 0.3s, visibility 0.3s;
+      }
+      .toast.show {
+        visibility: visible;
+        opacity: 1;
+      }
+
+      .form-select {
+        width: 100%;
+        padding: 8px;
+        margin-top: 5px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background-color: white;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <h1>Interactive Christmas gift exchange system</h1>
-    
+
+    <input type="text" id="apiToken" placeholder="请输入apiToken" />
     <div class="tabs">
-        <button class="tab active" onclick="showTab(0)">Step 1</button>
-        <button class="tab" onclick="showTab(1)">Step 2</button>
-        <button class="tab" onclick="showTab(2)">Step 3</button>
+      <button class="tab active" onclick="showTab(0)">Step 1</button>
+      <button class="tab" onclick="showTab(1)">Step 2</button>
+      <button class="tab" onclick="showTab(2)">Step 3</button>
     </div>
 
     <div class="tab-content active">
-        <p>点击报名，等待所有人报名完成，执行第二步</p>
-        <button id="generateKeys" onclick="generateKeys()">报名</button>
+      <p>点击报名，等待所有人报名完成，执行第二步</p>
+      <button id="generateKeys" onclick="generateKeys()">报名</button>
     </div>
 
     <div class="tab-content">
-        <p>提交地址, 加密存储。</p>
-        <div class="input-group">
-            <label>👤 我是</label>
-            <select class="form-select" id="userSelect"></select>
-        </div>
-        <div class="input-group">
-            <label>📍 我的地址</label>
-            <textarea id="myAddress" rows="3" style="width: 100%" placeholder="无格式要求，一定要能看懂，顺丰ID要注明"></textarea>
-        </div>
-        <button onclick="encryptAddress()">提交地址</button>
+      <p>提交地址, 加密存储。</p>
+      <div class="input-group">
+        <label>👤 我是</label>
+        <select class="form-select" id="userSelect"></select>
+      </div>
+      <div class="input-group">
+        <label>📍 我的地址</label>
+        <textarea
+          id="myAddress"
+          rows="3"
+          style="width: 100%"
+          placeholder="无格式要求，一定要能看懂，顺丰ID要注明"
+        ></textarea>
+      </div>
+      <button onclick="encryptAddress()">提交地址</button>
     </div>
 
     <div class="tab-content">
-        <button onclick="getShippingAddress()">获取邮寄地址</button>
-        <div class="input-group">
-            <label>📍 邮寄地址</label>
-            <label id="mailUserName"></label>
-            <textarea id="decryptedAddress" rows="3" style="width: 100%" readonly></textarea>
-        </div>
+      <button onclick="getShippingAddress()">获取邮寄地址</button>
+      <div class="input-group">
+        <label>📍 邮寄地址</label>
+        <textarea
+          id="decryptedAddress"
+          rows="3"
+          style="width: 100%"
+          readonly
+        ></textarea>
+      </div>
     </div>
     <div id="toast" class="toast"></div>
 
     <script>
-        // 页面加载时调用
-        document.addEventListener('DOMContentLoaded', () => {
-            loadUsers();
+      // 页面加载时调用
+      document.addEventListener("DOMContentLoaded", () => {
+        loadUsers();
+      });
+      const LOCALE_PREFIX = "cgs-";
+
+      async function loadUsers() {
+        try {
+          const users = getUsers();
+          const select = document.getElementById("userSelect");
+          select.innerHTML = '<option value="">请选择用户</option>';
+          users.forEach((user) => {
+            const option = document.createElement("option");
+            option.value = user;
+            option.textContent = user;
+            select.appendChild(option);
+          });
+        } catch (error) {
+          console.error("加载用户列表失败:", error);
+          showToast("加载用户列表失败", "error");
+        }
+      }
+
+      function showTab(index) {
+        // Hide all tabs and remove active class
+        document.querySelectorAll(".tab-content").forEach((content) => {
+          content.classList.remove("active");
+        });
+        document.querySelectorAll(".tab").forEach((tab) => {
+          tab.classList.remove("active");
         });
 
-        async function loadUsers() {
-            try {
-                const users = getUsers();
-                const select = document.getElementById('userSelect');
-                select.innerHTML = '<option value="">请选择用户</option>';
-                users.forEach(user => {
-                    const option = document.createElement('option');
-                    option.value = user;
-                    option.textContent = user;
-                    select.appendChild(option);
-                });
-            } catch (error) {
-                console.error('加载用户列表失败:', error);
-                showToast('加载用户列表失败', 'error');
-            }
+        // Show selected tab and add active class
+        document
+          .querySelectorAll(".tab-content")
+          [index].classList.add("active");
+        document.querySelectorAll(".tab")[index].classList.add("active");
+      }
+
+      async function generateKeys() {
+        if (
+          localStorage.getItem(LOCALE_PREFIX + "publicKey") &&
+          localStorage.getItem(LOCALE_PREFIX + "privateKey")
+        ) {
+          showToast("你已经报名过了");
+          document.getElementById("generateKeys").disabled = true;
+          return;
         }
 
-        function showTab(index) {
-            // Hide all tabs and remove active class
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
+        try {
+          const keyPair = await window.crypto.subtle.generateKey(
+            {
+              name: "RSA-OAEP",
+              modulusLength: 2048,
+              publicExponent: new Uint8Array([1, 0, 1]),
+              hash: "SHA-256",
+            },
+            true, // 是否可导出
+            ["encrypt", "decrypt"]
+          );
 
-            // Show selected tab and add active class
-            document.querySelectorAll('.tab-content')[index].classList.add('active');
-            document.querySelectorAll('.tab')[index].classList.add('active');
+          // 导出公钥
+          const publicKey = await window.crypto.subtle.exportKey(
+            "spki",
+            keyPair.publicKey
+          );
+
+          // 导出私钥
+          const privateKey = await window.crypto.subtle.exportKey(
+            "pkcs8",
+            keyPair.privateKey
+          );
+
+          // 转换为 base64 格式
+          const publicKeyBase64 = btoa(
+            String.fromCharCode(...new Uint8Array(publicKey))
+          );
+          const privateKeyBase64 = btoa(
+            String.fromCharCode(...new Uint8Array(privateKey))
+          );
+          localStorage.setItem(LOCALE_PREFIX + "publicKey", publicKeyBase64);
+          localStorage.setItem(LOCALE_PREFIX + "privateKey", privateKeyBase64);
+          submitPublicKey(publicKeyBase64);
+        } catch (error) {
+          console.error("密钥生成错误:", error);
+          throw error;
+        }
+      }
+
+      function getUsers() {
+        return [
+          "花生帅®",
+          "Roy。",
+        //   "ggbond",
+        //   "花生冰",
+        //   "Hugh",
+        //   "花生喵呜(出 Pixel 7、S22)",
+        //   "科班辉",
+        //   "Berry",
+        //   "花生路",
+        //   "xxm",
+        //   "花生刀",
+        //   "taevas。",
+        //   "蛋蛋",
+        //   "花生豆",
+        //   "按摩哥",
+        //   "新新新花生龙",
+        //   "一代目",
+        ];
+      }
+
+      async function submitDataToNocoDB(data, tableName) {
+        const apiUrl = `https://app.nocodb.com/api/v2/tables/${tableName}/records`;
+        const apiToken = document.getElementById("apiToken").value;
+        try {
+          const response = await fetch(apiUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "xc-token": apiToken,
+            },
+            body: JSON.stringify(data),
+          });
+
+          if (!response.ok) {
+            throw new Error(`Error: ${response.status} ${response.statusText}`);
+          }
+
+          const responseData = await response.json();
+          return true;
+        } catch (error) {
+          showToast("提交失败");
+          console.error("Error submitting data:", error);
+        }
+        return false;
+      }
+
+      async function getDataFromNocoDB(tableName) {
+        const apiUrl = `https://app.nocodb.com/api/v2/tables/${tableName}/records`;
+        const apiToken = document.getElementById("apiToken").value;
+        try {
+          const response = await fetch(apiUrl, {
+            method: "GET",
+            headers: {
+              "xc-token": apiToken,
+            },
+          });
+          if (!response.ok) {
+            throw new Error(`Error: ${response.status} ${response.statusText}`);
+          }
+          const responseData = await response.json();
+          return responseData.list;
+        } catch (error) {
+          showToast("获取数据失败");
+          console.error("Error fetching data:", error);
+        }
+      }
+
+      function submitPublicKey(publicKey) {
+        // 这里添加提交公钥的逻辑
+        const timestamp = new Date().getTime();
+        localStorage.setItem(LOCALE_PREFIX + "timestamp", timestamp);
+        const data = {
+          publicKey: publicKey,
+          timestamp: timestamp,
+        };
+        const result = submitDataToNocoDB(data, "mm5jv2zleqglfsq");
+        if (result) {
+          showToast("报名成功！");
+          // 提交完公钥禁止生成，把生成和提交按钮禁止
+          document.getElementById("generateKeys").disabled = true;
+        } else {
+          showToast("报名失败！");
+        }
+      }
+
+      async function fetchPublicKeys() {
+        const data = await getDataFromNocoDB("mm5jv2zleqglfsq");
+        return data.map((item) => ({
+          publicKey: item.publicKey,
+          timestamp: item.timestamp,
+        }));
+      }
+
+      function matchGay(publicKeys) {
+        const users = getUsers();
+        if (publicKeys.length !== users.length) {
+          alert("等待其他用户完成报名");
+          throw new Error("用户未报名完成");
+        }
+        publicKeys.sort((a, b) => a.timestamp - b.timestamp);
+        const timestamps = publicKeys.map((item) => item.timestamp);
+        const result = [];
+        const offset = 5;
+        for (let i = 0; i < publicKeys.length; i++) {
+          const newIndex = (i + offset) % publicKeys.length;
+          result.push({
+            publicKey: publicKeys[i].publicKey,
+            timestamp: timestamps[newIndex],
+          });
+        }
+        const timestamp = localStorage.getItem(LOCALE_PREFIX + "timestamp");
+        const index = publicKeys.findIndex((key) => key.timestamp === Number(timestamp));
+        return publicKeys[index].publicKey;
+      }
+
+      async function encryptAddress() {
+        try {
+          const publicKeys = await fetchPublicKeys();
+          const publicKey = matchGay(publicKeys);
+          console.log(publicKeys)
+          console.log(publicKey)
+          const address = document.getElementById("myAddress").value;
+          const userName = document.getElementById("userSelect").value;
+          const addressText = "寄给：" + userName + "，地址：" + address;
+          const encoder = new TextEncoder();
+          const addressData = encoder.encode(addressText);
+          // Base64 解码
+          const binaryDer = window.atob(publicKey);
+          const pubKeyBuffer = new Uint8Array(binaryDer.length);
+          for (let i = 0; i < binaryDer.length; i++) {
+            pubKeyBuffer[i] = binaryDer.charCodeAt(i);
+          }
+
+          // 导入密钥
+          const publicKeyImprted = await window.crypto.subtle.importKey(
+            "spki",
+            pubKeyBuffer,
+            {
+              name: "RSA-OAEP",
+              hash: "SHA-256",
+            },
+            true,
+            ["encrypt"]
+          );
+
+          const encrypted = await window.crypto.subtle.encrypt(
+            {
+              name: "RSA-OAEP",
+            },
+            publicKeyImprted,
+            addressData
+          );
+          const encryptedBase64 = btoa(
+            String.fromCharCode(...new Uint8Array(encrypted))
+          );
+          submitEncryptedAddress(encryptedBase64);
+        } catch (error) {
+          console.error("地址加密错误:", error);
+          throw error;
+        }
+      }
+
+      function submitEncryptedAddress(encryptedAddress) {
+        // 这里添加提交加密地址的逻辑
+        const data = {
+          address: encryptedAddress,
+        };
+        const result = submitDataToNocoDB(data, "myyuimput9pba7z");
+        if (result) {
+          showToast("加密地址已提交！");
+        } else {
+          showToast("加密地址提交失败！");
+        }
+      }
+
+      async function decryptAddress(encodeBase64Text, privateKey) {
+        const encryptData = window.atob(encodeBase64Text);
+        const bytes = new Uint8Array(encryptData.length);
+        for (let i = 0; i < encryptData.length; i++) {
+          bytes[i] = encryptData.charCodeAt(i);
+        }
+        const encodeData = bytes.buffer;
+
+        const decrypted = await window.crypto.subtle.decrypt(
+          {
+            name: "RSA-OAEP",
+          },
+          privateKey,
+          encodeData
+        );
+        return decrypted;
+      }
+
+      async function getShippingAddress() {
+        const privateKey = localStorage.getItem(LOCALE_PREFIX + "privateKey");
+        const binaryDer = window.atob(privateKey);
+        const buffer = new Uint8Array(binaryDer.length);
+        for (let i = 0; i < binaryDer.length; i++) {
+          buffer[i] = binaryDer.charCodeAt(i);
         }
 
-        async function generateKeys() {
-            if (localStorage.getItem('cgs-publicKey') && localStorage.getItem('cgs-privateKey')) {
-                showToast("你已经报名过了");
-                document.getElementById('generateKeys').disabled = true;
-                return;
-            }
-
-            try {
-                const keyPair = await window.crypto.subtle.generateKey(
-                    {
-                    name: "RSA-OAEP",
-                    modulusLength: 2048,
-                    publicExponent: new Uint8Array([1, 0, 1]),
-                    hash: "SHA-256",
-                    },
-                    true,  // 是否可导出
-                    ["encrypt", "decrypt"]
-                );
-
-                // 导出公钥
-                const publicKey = await window.crypto.subtle.exportKey(
-                    "spki",
-                    keyPair.publicKey
-                );
-
-                // 导出私钥
-                const privateKey = await window.crypto.subtle.exportKey(
-                    "pkcs8",
-                    keyPair.privateKey
-                );
-
-                // 转换为 base64 格式
-                const publicKeyBase64 = btoa(String.fromCharCode(...new Uint8Array(publicKey)));
-                const privateKeyBase64 = btoa(String.fromCharCode(...new Uint8Array(privateKey)));
-                localStorage.setItem('cgs-publicKey', publicKeyBase64);
-                localStorage.setItem('cgs-privateKey', privateKeyBase64);
-                submitPublicKey(publicKeyBase64);
-            } catch (error) {
-                console.error('密钥生成错误:', error);
-                throw error;
-            }
+        const priKeyImported = await window.crypto.subtle.importKey(
+          "pkcs8",
+          buffer,
+          {
+            name: "RSA-OAEP",
+            hash: { name: "SHA-256" },
+          },
+          true,
+          ["decrypt"]
+        );
+        const addressData = await getDataFromNocoDB("myyuimput9pba7z");
+        const addressList = addressData.map((item) => item.address);
+        console.log("addressList", addressList);
+        for (let i = 0; i < addressList.length; i++) {
+          const address = addressList[i];
+          try {
+            const decrypted = await decryptAddress(address, priKeyImported);
+            const decoder = new TextDecoder();
+            const decodeValue = decoder.decode(decrypted);
+            document.getElementById("decryptedAddress").value = decodeValue;
+            break;
+          } catch (error) {
+            console.error("解密地址错误:", error, address);
+          }
         }
+      }
 
-        function getUsers() {
-            return [
-                "花生帅®",
-                "Roy。",
-                "ggbond",
-                "花生冰",
-                "Hugh",
-                "花生喵呜(出 Pixel 7、S22)",
-                "科班辉",
-                "Berry",
-                "花生路",
-                "xxm",
-                "花生刀",
-                "taevas。",
-                "蛋蛋",
-                "花生豆",
-                "按摩哥",
-                "新新新花生龙",
-                "一代目",
-            ]
-        }
+      function showToast(message, duration = 1000) {
+        const toast = document.getElementById("toast");
+        toast.textContent = message;
+        toast.classList.add("show");
 
-        function submitPublicKey(publicKey) {
-            // 这里添加提交公钥的逻辑
-            showToast("报名成功！");
-            // 提交完公钥禁止生成，把生成和提交按钮禁止
-            document.getElementById('generateKeys').disabled = true;
-        }
+        setTimeout(() => {
+          toast.classList.remove("show");
+        }, duration);
+      }
 
-        async function fetchPublicKeys() {
-            // 这里添加获取公钥的逻辑
-            return ["publicKey1", "publicKey2", "publicKey3"]
-        }
-
-        function matchGay(pubKeys, users, pubKey = null, userName = null) {
-            if (pubKeys.length !== users.length) {
-                alert('等待其他用户完成报名');
-                throw new Error('用户未报名完成');
-            }
-            const sortedPubKeys = pubKeys.sort();
-            const sortedUsers = users.sort();
-            if (pubKey) {
-                const index = sortedPubKeys.indexOf(pubKey);
-                return sortedUsers[index];
-            } else {
-                const index = sortedUsers.indexOf(userName);
-                return sortedPubKeys[index];
-            }
-        }
-
-
-
-        async function encryptAddress() {
-            try {
-                const publicKeys = await fetchPublicKeys();
-                const users = getUsers();
-                const publicKey = matchGay(publicKeys, users, null, document.getElementById('userSelect').value);
-                const address = document.getElementById('myAddress').value;
-
-                const encoder = new TextEncoder();
-                const addressData = encoder.encode(address);
-                // Base64 解码
-                const binaryDer = window.atob(publicKey);
-                const pubKeyBuffer = new Uint8Array(binaryDer.length);
-                for (let i = 0; i < binaryDer.length; i++) {
-                    pubKeyBuffer[i] = binaryDer.charCodeAt(i);
-                }
-
-                // 导入密钥
-                const publicKeyImprted = await window.crypto.subtle.importKey(
-                    'spki',
-                    pubKeyBuffer,
-                    {
-                        name: 'RSA-OAEP',
-                        hash: 'SHA-256',
-                    },
-                    true,
-                    ['encrypt']
-                );
-
-                const encrypted = await window.crypto.subtle.encrypt(
-                    {
-                        name: 'RSA-OAEP'
-                    },
-                    publicKeyImprted,
-                    addressData
-                );
-                const encryptedBase64 = btoa(String.fromCharCode(...new Uint8Array(encrypted)));
-                submitEncryptedAddress(encryptedBase64);
-            } catch (error) {
-                console.error('地址加密错误:', error);
-                throw error;
-            }
-        }
-
-        function submitEncryptedAddress() {
-            // 这里添加提交加密地址的逻辑
-            alert("加密地址已提交！");
-        }
-
-        async function decryptAddress(encodeBase64Text, privateKey) {
-            const encryptData = window.atob(encodeBase64Text);
-            const bytes = new Uint8Array(encryptData.length);
-            for (let i = 0; i < encryptData.length; i++) {
-                bytes[i] = encryptData.charCodeAt(i);
-            }
-            const encodeData = bytes.buffer;
-
-            const decrypted = await window.crypto.subtle.decrypt(
-                {
-                    name: 'RSA-OAEP'
-                },
-                privateKey,
-                encodeData
-            );
-            return decrypted;
-        }
-
-        async function getAddressList() {
-            return ["mzEG17bak8Ew+Aujf7sUsK9jJIe2hZ7tcId51Rk6wwr+pGpvYusTr7alGQinl7L0WNcOoD5PzFavv3k2Pl7AyG+rE9GfMQPwL75KMQ4nD4nLwV7rVwg9eAHoJbcJHzLAPlA6qLqeMA1J5hV95gCd3hj/Ixu8cetOc6wMsecxjZpaVDBP4rpD9uTBU+Rj9VpgECJLgZejq08DYBjCyqFkkRDagJMQsmXLRbzvqUHQ3sYurDT0QSYyS800bZ74cazodT+JC5GVZuhhd0FQEcnZHd55QeOu2l4nbzMZtd8itSjvQy81eUQgBGd4FeSD9s7MKhR+VRWjakKomc6NYWXgHA==",
-                "SwaZcPcp4QPVq3pr3f7RM9rs+n/wFDcG56Szt60ICDOJy/9qAJbUznR+bhztLEzRaz01LfLZuzTGXf3HlFiyiIblC+NpvAmb/dgLob49FQow2dXjicvp/nFgKCftYea9iaE3psW587C9sCzxnHXK8tVRyHi58In6yNgFQqI+Re4ymkayBF4+b9s+wTbFpaGzTJ7M/dWkYBw6Ayod1WhqiGvMJiDhK+p8OTnoDa1AC8sH0PD9ANjr+hfq32FwOLwVzKA4GbhRpImWTShpLStmyg5d2rmtYVR1qu4t9V4x8jyL9lql8AszAIm68D3u6FUGKHI0K/69yhgXG+UkEI6/wg=="]
-        }
-
-        async function getShippingAddress() {
-            const privateKey = localStorage.getItem('cgs-privateKey');
-            const publicKey = localStorage.getItem('cgs-publicKey');
-            const publicKeys = await fetchPublicKeys();
-            const users = getUsers();
-            const userName = matchGay(publicKeys, users, publicKey, null);
-            document.getElementById('mailUserName').textContent = "寄给：" + userName;
-            const binaryDer = window.atob(privateKey);
-            const buffer = new Uint8Array(binaryDer.length);
-            for (let i = 0; i < binaryDer.length; i++) {
-                buffer[i] = binaryDer.charCodeAt(i);
-            }
-
-            const priKeyImported = await window.crypto.subtle.importKey(
-                'pkcs8',
-                buffer,
-                {
-                    name: 'RSA-OAEP',
-                    hash: { name: 'SHA-256' },
-                },
-                true,
-                ['decrypt']
-            );  
-            const addressList = await getAddressList();
-            for (let i = 0; i < addressList.length; i++) {
-                const address = addressList[i];
-                try {
-                    const decrypted = await decryptAddress(address, priKeyImported);
-                    const decoder = new TextDecoder();
-                    const decodeValue = decoder.decode(decrypted);
-                    document.getElementById('decryptedAddress').value = decodeValue;
-                    break;
-                } catch (error) {
-                    console.error('解密地址错误:', error, address);
-                }
-            }
-        }
-
-        function showToast(message, duration = 1000) {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.classList.add('show');
-
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, duration);
-        }
-
-        function copyPrivateKey() {
-            const privateKey = document.getElementById('privateKey').textContent;
-            navigator.clipboard.writeText(privateKey);
-            showToast('复制成功');
-        }
+      function copyPrivateKey() {
+        const privateKey = document.getElementById("privateKey").textContent;
+        navigator.clipboard.writeText(privateKey);
+        showToast("复制成功");
+      }
     </script>
-</body>
+  </body>
 </html>
