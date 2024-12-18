@@ -138,8 +138,6 @@
   </head>
   <body>
     <h1>Interactive Christmas gift exchange system</h1>
-
-    <input type="text" id="apiToken" placeholder="请输入apiToken" />
     <div class="tabs">
       <button class="tab active" onclick="showTab(0)">Step 1</button>
       <button class="tab" onclick="showTab(1)">Step 2</button>
@@ -188,7 +186,10 @@
       document.addEventListener("DOMContentLoaded", () => {
         loadUsers();
       });
-      const LOCALE_PREFIX = "cgs-";
+      function getStoragePrefix() {
+        const round = new URLSearchParams(window.location.search).get("round");
+        return "cgs-" + round + "-";
+      }
 
       async function loadUsers() {
         try {
@@ -225,8 +226,8 @@
 
       async function generateKeys() {
         if (
-          localStorage.getItem(LOCALE_PREFIX + "publicKey") &&
-          localStorage.getItem(LOCALE_PREFIX + "privateKey")
+          localStorage.getItem(getStoragePrefix() + "publicKey") &&
+          localStorage.getItem(getStoragePrefix() + "privateKey")
         ) {
           showToast("你已经报名过了");
           document.getElementById("generateKeys").disabled = true;
@@ -264,9 +265,7 @@
           const privateKeyBase64 = btoa(
             String.fromCharCode(...new Uint8Array(privateKey))
           );
-          localStorage.setItem(LOCALE_PREFIX + "publicKey", publicKeyBase64);
-          localStorage.setItem(LOCALE_PREFIX + "privateKey", privateKeyBase64);
-          submitPublicKey(publicKeyBase64);
+          submitPublicKey(publicKeyBase64, privateKeyBase64);
         } catch (error) {
           console.error("密钥生成错误:", error);
           throw error;
@@ -277,33 +276,37 @@
         return [
           "花生帅®",
           "Roy。",
-          "ggbond",
-          "花生冰",
-          "Hugh",
-          "花生喵呜(出 Pixel 7、S22)",
-          "科班辉",
-          "Berry",
-          "花生路",
-          "xxm",
-          "花生刀",
-          "taevas。",
-          "蛋蛋",
-          "花生豆",
-          "按摩哥",
-          "新新新花生龙",
-          "一代目",
+          // "ggbond",
+          // "花生冰",
+          // "Hugh",
+          // "花生喵呜(出 Pixel 7、S22)",
+          // "科班辉",
+          // "Berry",
+          // "花生路",
+          // "xxm",
+          // "花生刀",
+          // "taevas。",
+          // "蛋蛋",
+          // "花生豆",
+          // "按摩哥",
+          // "新新新花生龙",
+          // "一代目",
         ];
       }
 
-      async function submitDataToNocoDB(data, tableName) {
+      async function submitDataToNocoDB(data, tableName, method = "POST" | "PATCH") {
         const apiUrl = `https://app.nocodb.com/api/v2/tables/${tableName}/records`;
-        const apiToken = document.getElementById("apiToken").value;
+        const token = new URLSearchParams(window.location.search).get("token");
+        if (!token || !tableName) {
+          showToast("认证失败");
+          return false;
+        }
         try {
           const response = await fetch(apiUrl, {
-            method: "POST",
+            method: method,
             headers: {
               "Content-Type": "application/json",
-              "xc-token": apiToken,
+              "xc-token": token,
             },
             body: JSON.stringify(data),
           });
@@ -323,12 +326,16 @@
 
       async function getDataFromNocoDB(tableName) {
         const apiUrl = `https://app.nocodb.com/api/v2/tables/${tableName}/records`;
-        const apiToken = document.getElementById("apiToken").value;
+        const token = new URLSearchParams(window.location.search).get("token");
+        if (!token || !tableName) {
+          showToast("认证失败");
+          return false;
+        }
         try {
           const response = await fetch(apiUrl, {
             method: "GET",
             headers: {
-              "xc-token": apiToken,
+              "xc-token": token,
             },
           });
           if (!response.ok) {
@@ -342,29 +349,29 @@
         }
       }
 
-      function submitPublicKey(publicKey) {
-        // 这里添加提交公钥的逻辑
-        const timestamp = new Date().getTime();
-        localStorage.setItem(LOCALE_PREFIX + "timestamp", timestamp);
+      async function submitPublicKey(publicKey, privateKey) {
         const data = {
           publicKey: publicKey,
-          timestamp: timestamp,
         };
-        const result = submitDataToNocoDB(data, "mm5jv2zleqglfsq");
+        const tableName = new URLSearchParams(window.location.search).get("table");
+        const result = await submitDataToNocoDB(data, tableName, "POST");
         if (result) {
           showToast("报名成功！");
           // 提交完公钥禁止生成，把生成和提交按钮禁止
           document.getElementById("generateKeys").disabled = true;
+          localStorage.setItem(getStoragePrefix() + "publicKey", publicKey);
+          localStorage.setItem(getStoragePrefix() + "privateKey", privateKey);
         } else {
           showToast("报名失败！");
         }
       }
 
       async function fetchPublicKeys() {
-        const data = await getDataFromNocoDB("mm5jv2zleqglfsq");
+        const tableName = new URLSearchParams(window.location.search).get("table");
+        const data = await getDataFromNocoDB(tableName);
         return data.map((item) => ({
           publicKey: item.publicKey,
-          timestamp: item.timestamp,
+          id: item.Id,
         }));
       }
 
@@ -374,35 +381,32 @@
           alert("等待其他用户完成报名");
           throw new Error("用户未报名完成");
         }
-        publicKeys.sort((a, b) => a.timestamp - b.timestamp);
-        const timestamps = publicKeys.map((item) => item.timestamp);
-        const result = [];
-        const offset = 5;
-        for (let i = 0; i < publicKeys.length; i++) {
-          const newIndex = (i + offset) % publicKeys.length;
-          result.push({
-            publicKey: publicKeys[i].publicKey,
-            timestamp: timestamps[newIndex],
-          });
+        publicKeys.sort((a, b) => {
+          if (a.publicKey < b.publicKey) return -1;
+          if (a.publicKey > b.publicKey) return 1;
+          return 0;
+        }); 
+        const offset = 1;
+        const myIndex = publicKeys.findIndex((item) => item.publicKey === localStorage.getItem(getStoragePrefix() + "publicKey"));
+        if (myIndex === -1) { 
+          showToast("未找到公钥, 重开吧");
+          throw new Error("未找到公钥, 重开吧");
         }
-        const timestamp = localStorage.getItem(LOCALE_PREFIX + "timestamp");
-        const index = publicKeys.findIndex((key) => key.timestamp === Number(timestamp));
-        return publicKeys[index].publicKey;
+        const newIndex = (myIndex + offset) % publicKeys.length;
+        return publicKeys[newIndex];
       }
 
       async function encryptAddress() {
         try {
           const publicKeys = await fetchPublicKeys();
-          const publicKey = matchGay(publicKeys);
-          console.log(publicKeys)
-          console.log(publicKey)
+          const toKeyItem = matchGay(publicKeys);
           const address = document.getElementById("myAddress").value;
           const userName = document.getElementById("userSelect").value;
           const addressText = "寄给：" + userName + "，地址：" + address;
           const encoder = new TextEncoder();
           const addressData = encoder.encode(addressText);
           // Base64 解码
-          const binaryDer = window.atob(publicKey);
+          const binaryDer = window.atob(toKeyItem.publicKey);
           const pubKeyBuffer = new Uint8Array(binaryDer.length);
           for (let i = 0; i < binaryDer.length; i++) {
             pubKeyBuffer[i] = binaryDer.charCodeAt(i);
@@ -430,19 +434,21 @@
           const encryptedBase64 = btoa(
             String.fromCharCode(...new Uint8Array(encrypted))
           );
-          submitEncryptedAddress(encryptedBase64);
+          submitEncryptedAddress(encryptedBase64, toKeyItem);
         } catch (error) {
           console.error("地址加密错误:", error);
           throw error;
         }
       }
 
-      function submitEncryptedAddress(encryptedAddress) {
+      async function submitEncryptedAddress(encryptedAddress, toKeyItem) {
         // 这里添加提交加密地址的逻辑
         const data = {
+          Id: toKeyItem.id,
           address: encryptedAddress,
         };
-        const result = submitDataToNocoDB(data, "myyuimput9pba7z");
+        const tableName = new URLSearchParams(window.location.search).get("table");
+        const result = await submitDataToNocoDB(data, tableName, "PATCH");
         if (result) {
           showToast("加密地址已提交！");
         } else {
@@ -469,7 +475,7 @@
       }
 
       async function getShippingAddress() {
-        const privateKey = localStorage.getItem(LOCALE_PREFIX + "privateKey");
+        const privateKey = localStorage.getItem(getStoragePrefix() + "privateKey");
         const binaryDer = window.atob(privateKey);
         const buffer = new Uint8Array(binaryDer.length);
         for (let i = 0; i < binaryDer.length; i++) {
@@ -486,8 +492,15 @@
           true,
           ["decrypt"]
         );
-        const addressData = await getDataFromNocoDB("myyuimput9pba7z");
-        const addressList = addressData.map((item) => item.address);
+        const tableName = new URLSearchParams(window.location.search).get("table");
+        const addressData = await getDataFromNocoDB(tableName);
+        let addressList = addressData.map((item) => item.address);
+        addressList = addressList.filter((item) => item !== "");
+        const users = getUsers();
+        if (addressList.length !== users.length) {
+          showToast("等待其他用户提交地址");
+          throw new Error("用户未提交地址");
+        }
         console.log("addressList", addressList);
         for (let i = 0; i < addressList.length; i++) {
           const address = addressList[i];
